@@ -4,7 +4,6 @@ library(readxl)    # ler arquivo do excel
 library(writexl)   # salvar excel
 library(patchwork) # to join plots
 library(cowplot) 
-library(ragg)
 
 # Pareadas subgrupos ----
 
@@ -168,7 +167,7 @@ est_c <- dfsubgrupos %>%
   labs(x = "", y = "Global Effect Size") +
   scale_colour_manual(values = "#bb9825") +
   geom_hline(yintercept = 0, lty = 2, linewidth = .2) +
-  facet_grid(moderator ~ ., scales = "free", space = "free") +
+  facet_grid(fct_inorder(moderator) ~ ., scales = "free", space = "free") +
   geom_text(
     aes(label = paste(
       "k = ",
@@ -316,7 +315,7 @@ est_r <- dfsubgrupos %>%
   labs(x = "", y = "Global Effect Size") +
   scale_colour_manual(values = "#0c73a3") +
   geom_hline(yintercept = 0, lty = 2, linewidth = .2) +
-  facet_grid(moderator ~ ., scales = "free", space = "free") +
+  facet_grid(fct_inorder(moderator) ~ ., scales = "free", space = "free") +
   geom_text(
     aes(label = paste(
       "k = ",
@@ -447,10 +446,10 @@ df_c <- df_c %>%
 
 # Calcular tamanho de efeito em SDM hedges g 
 
-Efeito_c <- pairwise(list(as.character(atd_type), as.character(atd_type2), as.character(comparator)),
-                     n = list(atd_n_round, atd_n_round2, ctr_n_corr),
-                     mean = list(atd_mean, atd_mean2, ctr_mean),
-                     sd = list(atd_sd, atd_sd2, ctr_sd),
+Efeito_c <- pairwise(list(as.character(comparator), as.character(atd_type), as.character(atd_type2)),
+                     n = list(ctr_n_corr, atd_n_round, atd_n_round2),
+                     mean = list(ctr_mean, atd_mean, atd_mean2),
+                     sd = list(ctr_sd, atd_sd, atd_sd2),
                      data = df_c, studlab = label, sm = "SMD")
 
 Efeito_c
@@ -474,7 +473,7 @@ nma_c <- netmeta(
   fixed = FALSE,
   details.chkmultiarm = TRUE,
   tol.multiarm = .5,
-  reference.group = "veículo",
+  reference.group = "vehicle",
   sep.trts = " vs ",
   small = "good"
 )
@@ -507,22 +506,23 @@ sqrtpointsizes <- sqrt(pointsizes / 2)
 
 # plotar e salvar rede
 
-png("Fig/rede_c.png", height = 600, width = 600)
+png("figure/rede_c.png", height = 2000, width = 2000, res = 300)
 
 netgraph(
   nma_c,
+  seq = nma_c$trts,
   labels = nma_c$trts,
   points = TRUE,
   cex = 1.5,
   cex.points = sqrtpointsizes,
   multiarm = FALSE,
   thickness = "number.of.studies",
+  lwd = 2,
   plastic = FALSE,
-  col = "#bb9825",
-  col.points = "orangered2",
+  col = "black",
+  col.points = "#bb9825",
   start = "circle",
-  iterate = FALSE,
-  seq = nma_c$trts
+  iterate = FALSE
 )
 
 dev.off()
@@ -563,18 +563,18 @@ dev.off()
 
 # Forestplot com todos tratammentos versus controle - aqui o parametro de smallvalues é inverso
 
-png("Fig/forest_nma_c.png", height = 400, width = 600)
+png("figure/forest_nma_c.png", height = 800, width = 2000, res = 300)
 
 forest(nma_c,
        leftcols = c("studlab", "k", "pscore"),
        small.values = "good",
        sortva = -Pscore,
-       reference.group = "veículo",
+       reference.group = "vehicle",
        drop.reference.group = TRUE,
        equal.size = FALSE,
-       label.left = "Favorece antidepressivo",
-       label.right = "Favorece veículo",
-       smlab = paste("Duração da \n", "Imobilidade"))
+       label.left = "Favours antidepressant",
+       label.right = "Favours vehicle",
+       smlab = paste("Duration of\n immobility"))
 
 dev.off()
 
@@ -660,12 +660,13 @@ nma_r <- netmeta(
   method.tau = "REML",
   random = TRUE,
   fixed = FALSE,
-  reference.group = "veículo",
+  reference.group = "vehicle",
   sep.trts = " vs ",
-  small = "bad"
+  small = "good"
 )
 
 nma_r 
+
 
 # calcular a inconsistência total com base no modelo completo de efeitos aleatórios de interação de design por tratamento
 
@@ -701,10 +702,11 @@ sqrtpointsizes <- sqrt(pointsizes / 2)
 
 # plotar e salvar rede
 
-png("Fig/rede_r.png", height = 600, width = 600)
+png("figure/rede_r.png", height = 2000, width = 2000, res = 300)
 
 netgraph(
   nma_r,
+  seq = nma_r$trts,
   labels = nma_r$trts,
   points = TRUE,
   cex = 1.5,
@@ -712,11 +714,11 @@ netgraph(
   multiarm = FALSE,
   thickness = "number.of.studies",
   plastic = FALSE,
-  col = "#0c73a3",
-  col.points = "#a6243a",
+  col = "black",
+  col.points = "#0c73a3",
   start = "circle",
   iterate = FALSE,
-  seq = nma_r$trts
+  lwd = 2
 )
 
 dev.off()
@@ -743,26 +745,25 @@ netgraph(
 
 # visualizacao de evi direta e indireta
 
-d.evidence <- direct.evidence.plot(nma_r, random = TRUE)
+d_evidence <- plot.netcomparison(nma_r, random = TRUE)
 
-d.evidence
+d_evidence
 
 
 # rank NMA estimates using P-scores (R?cker & Schwarzer, 2015) 
 
 randomnetrank <- netrank(nma_r, small.values = "good")
-
-png("Fig/ranking_r.png", height = 400, width = 600)
-
 randomnetrank
+
+png("figure/ranking_r.png", height = 1800, width = 2200, res = 300)
 
 plot(
   name = "Ranqueamento",
   randomnetrank,
   random = TRUE,
   col = "black",
-  low = "#0c73a3",
-  high = "#82c236",
+  low = "white",
+  high = "#0c73a3",
   legend = TRUE,
   angle = 45,
   hjust.x = 1,
@@ -772,25 +773,24 @@ plot(
   nchar.trts = 12,
   main.face = "bold",
   axis.size = 12
-  
 )
 
 dev.off()
 
 # Forestplot com todos tratammentos versus controle
 
-png("Fig/forest_nma_r.png", height = 400, width = 600)
+png("figure/forest_nma_r.png",  height = 1050, width = 2030, res = 300)
 
 forest(nma_r,
        leftcols = c("studlab", "k", "pscore"),
        small.values = "good",
        sortva = -Pscore,
-       reference.group = "veículo",
+       reference.group = "vehicle",
        drop.reference.group = TRUE,
        equal.size = FALSE,
-       label.left = "Favorece antidepressivo",
-       label.right = "Favorece veículo",
-       smlab = paste("Duração da \n", "Imobilidade"))
+       label.left = "Favours antidepressant",
+       label.right = "Favours vehicle",
+       smlab = paste("Duration of\n immobility"))
 
 dev.off()
 
