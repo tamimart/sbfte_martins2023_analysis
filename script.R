@@ -20,7 +20,8 @@ dfsubgrupos <- dfsubgrupos %>%
          category = fct_reorder(category, k),
          k = as.numeric(k),
          nested = case_when(nested == "" ~ ", nested"),
-         nested = replace_na(nested,""))
+         nested = replace_na(nested,""),
+         outline = 100)
 
 
 dfsubgrupos$moderator <-
@@ -199,19 +200,18 @@ het_c <- dfsubgrupos %>%
   filter(species == "Mice",
          type == "Intervention") %>%
   ggplot(aes(
-    x = fct_reorder(category, k),
-    y = inconsistency,
-    fill = "#bb9825"
+    x = fct_reorder(category, k)
   )) +
-  geom_bar(stat = "identity") +
+  geom_bar(aes(y = inconsistency, fill = "inconsistency"), stat = "identity") +
+  geom_bar(aes(y = outline, fill = "outline"), stat = "identity", position = "identity", alpha = 0, linewidth = .1, color = "black") +
   scale_y_continuous(limits = c(0, 120), breaks = c(0, 50, 100)) +
   labs(x = "", y = "I²(%) tau²") +
-  scale_fill_manual(values = "#bb9825") +
+  scale_fill_manual(values = c("inconsistency" = "#bb9825", "outline" = "black"), guide = "none") +
   geom_text(
     aes(label = tau2),
     y = 100,
     color = "black",
-    size = 2.5,
+    size = 2.5, 
     hjust = -.1
   ) +
   facet_grid(fct_inorder(moderator) ~ ., scales = "free", space = "free") +
@@ -346,14 +346,13 @@ het_r <- dfsubgrupos %>%
   filter(species == "Rat",
          type == "Intervention") %>%
   ggplot(aes(
-    x = fct_reorder(category, k),
-    y = inconsistency,
-    fill = "#0c73a3"
+    x = fct_reorder(category, k)
   )) +
-  geom_bar(stat = "identity") +
+  geom_bar(aes(y = inconsistency, fill = "inconsistency"), stat = "identity") +
+  geom_bar(aes(y = outline, fill = "outline"), stat = "identity", position = "identity", alpha = 0, linewidth = .1, color = "black") +
   scale_y_continuous(limits = c(0, 120), breaks = c(0, 50, 100)) +
   labs(x = "", y = "I²(%) tau²") +
-  scale_fill_manual(values = "#0c73a3") +
+  scale_fill_manual(values = c("inconsistency" = "#0c73a3", "outline" = "black"), guide = "none") +
   geom_text(
     aes(label = tau2),
     y = 100,
